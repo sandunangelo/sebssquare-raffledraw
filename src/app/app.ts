@@ -2,8 +2,10 @@ import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@ang
 
 import { ConfirmDialog } from './components/confirm-dialog';
 import { DrawStage } from './components/draw-stage';
+import { LoginScreen } from './components/login-screen';
 import { SetupPanel } from './components/setup-panel';
 import { WinnersBoard } from './components/winners-board';
+import { AuthService } from './core/auth';
 import { ConfirmService } from './core/confirm';
 import { DRAW_DURATION_MS, RaffleStore } from './core/raffle-store';
 import { SoundService } from './core/sound';
@@ -11,7 +13,7 @@ import { SoundService } from './core/sound';
 @Component({
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ConfirmDialog, DrawStage, SetupPanel, WinnersBoard],
+  imports: [ConfirmDialog, DrawStage, LoginScreen, SetupPanel, WinnersBoard],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   host: {
@@ -24,6 +26,7 @@ import { SoundService } from './core/sound';
 export class App {
   protected readonly store = inject(RaffleStore);
   protected readonly sound = inject(SoundService);
+  protected readonly auth = inject(AuthService);
   private readonly confirm = inject(ConfirmService);
 
   protected readonly drawSeconds = Math.round(DRAW_DURATION_MS / 1000);
@@ -49,6 +52,11 @@ export class App {
 
   protected onKeydown(event: KeyboardEvent): void {
     if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) {
+      return;
+    }
+    // Behind the sign-in screen the shortcuts would drive a draw nobody can
+    // see - Space in particular would start one.
+    if (!this.auth.signedIn()) {
       return;
     }
     // The dialog owns the keyboard while it is up: Escape must dismiss it, not
@@ -102,6 +110,21 @@ export class App {
       return;
     }
     this.store.draw();
+  }
+
+  /**
+   * Entries and winners live in their own storage, so signing out only puts
+   * the gate back up - the night is exactly where it was on the way back in.
+   */
+  protected async signOut(): Promise<void> {
+    const confirmed = await this.confirm.ask({
+      title: 'Sign out?',
+      body: 'The entry list and the winners drawn so far are kept. You will need the username and password to get back in.',
+      confirmLabel: 'Sign out',
+    });
+    if (confirmed) {
+      this.auth.signOut();
+    }
   }
 
   protected toggleStage(): void {

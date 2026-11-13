@@ -19,6 +19,40 @@ npm run build        # production bundle in dist/raffle-drawer
 
 Requires Node 20.19+, 22.12+ or 24+ (built on Node 24).
 
+## Signing in
+
+The app opens on a sign-in screen. The accounts live in the environment files,
+alongside everything else that is configured per build:
+
+```ts
+auth: {
+  sessionHours: 12,
+  credentials: [
+    { username: 'compere', password: 'SebsSquare@2005', displayName: 'Compere' },
+    { username: 'admin', password: 'RaffleAdmin@2005', displayName: 'Admin' },
+  ],
+},
+```
+
+Add one entry per person running the night. Usernames are matched without
+regard to case, passwords exactly as typed, and `displayName` is optional - it
+only shows on the tooltip of the sign-out button in the header.
+
+A sign-in is remembered in `localStorage` for `sessionHours`, so a refresh
+mid-event does not ask again, and the entry list and winners are untouched by
+signing out. Deleting a credential from the environment file immediately ends
+any session it had already handed out. Leave `credentials` empty and the gate
+is off entirely - a deliberate choice, so that a half-finished config cannot
+lock everybody out of the draw.
+
+> **What this does and does not protect.** This is a static site with no
+> backend, so the credentials above are compiled into the JavaScript bundle and
+> anybody who opens the browser's sources can read them. The gate stops the
+> draw being walked into by whoever has the link; it is not a security
+> boundary, and the entry list behind it is a link-shared Google Sheet in any
+> case. Do not reuse a password here that is used anywhere that matters, and
+> change the ones shipped above before the event.
+
 ## The candidate sheet
 
 The sheet URL lives in the environment files, not in the components:

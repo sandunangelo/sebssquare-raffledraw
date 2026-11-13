@@ -10,6 +10,31 @@
  */
 export const environment = {
   production: true,
+
+  /**
+   * The sign-in gate in front of the app.
+   *
+   * Be clear-eyed about what this is: the app is a static bundle with no
+   * backend, so everything below ships inside the JavaScript and anyone who
+   * opens the browser sources can read it. It keeps the draw from being walked
+   * into by whoever happens to have the link - it is not a security boundary,
+   * and the entry list behind it is a link-shared Google Sheet in any case.
+   *
+   * Add as many sign-ins as there are people running the night. Usernames are
+   * matched case-insensitively, passwords exactly as typed. `displayName` is
+   * optional and only appears on the sign-out button's tooltip.
+   *
+   * Leave `credentials` empty to turn the gate off completely.
+   */
+  auth: {
+    /** How long a sign-in lasts before it is asked for again. */
+    sessionHours: 12,
+    credentials: [
+      { username: 'compere', password: 'SebsSquare@2005', displayName: 'Compere' },
+      { username: 'admin', password: 'RaffleAdmin@2005', displayName: 'Admin' },
+    ],
+  },
+
   candidateSheetUrl:
     'https://docs.google.com/spreadsheets/d/1NXc81ILcoWwz_agK86rCTqPfb9cs4twv7GamZ9aFmDI/edit?usp=sharing',
 

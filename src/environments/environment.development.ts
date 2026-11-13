@@ -1,6 +1,25 @@
 /** Development overrides. Swapped in by angular.json fileReplacements. */
 export const environment = {
   production: false,
+
+  /**
+   * The sign-in gate. Same accounts as environment.ts so both are exercised
+   * while developing, but with short passwords - the real ones are only worth
+   * setting on the production build. Usernames are matched without regard to
+   * case, passwords exactly as typed, `displayName` is optional.
+   *
+   * Empty `credentials` turns the gate off entirely, which is the quickest way
+   * to work on the draw itself without signing in on every reload.
+   */
+  auth: {
+    /** How long a sign-in lasts before it is asked for again. */
+    sessionHours: 12,
+    credentials: [
+      { username: 'compere', password: 'compere', displayName: 'Compere' },
+      { username: 'admin', password: 'admin', displayName: 'Admin' },
+    ],
+  },
+
   candidateSheetUrl:
     'https://docs.google.com/spreadsheets/d/1NXc81ILcoWwz_agK86rCTqPfb9cs4twv7GamZ9aFmDI/edit?usp=sharing',
 

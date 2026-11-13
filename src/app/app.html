@@ -1,136 +1,165 @@
 <div class="rd-backdrop" aria-hidden="true"></div>
 
-<header class="shell__header" [class.shell__header--slim]="stageMode()">
-  <div class="container-xxl d-flex flex-wrap align-items-center gap-3 py-3">
-    <div class="brand">
-      <span
-        class="brand__mark"
-        role="img"
-        aria-label="SEBS Square 2005, St. Sebastian's College Moratuwa"
-      ></span>
-      <span class="brand__text">
-        <span class="brand__name">Raffle <span class="rd-gradient-text">Drawer</span></span>
-        <span class="brand__sub">SEBS Square 2005 &middot; {{ drawSeconds }}-second live draw</span>
-      </span>
-    </div>
-
-    <div class="stats ms-auto" role="group" aria-label="Draw status">
-      <div class="stat">
-        <span class="stat__value rd-nums">{{ store.round() }}</span>
-        <span class="stat__label">Round</span>
+@if (!auth.signedIn()) {
+  <app-login-screen />
+} @else {
+  <header class="shell__header" [class.shell__header--slim]="stageMode()">
+    <div class="container-xxl d-flex flex-wrap align-items-center gap-3 py-3">
+      <div class="brand">
+        <span
+          class="brand__mark"
+          role="img"
+          aria-label="SEBS Square 2005, St. Sebastian's College Moratuwa"
+        ></span>
+        <span class="brand__text">
+          <span class="brand__name">Raffle <span class="rd-gradient-text">Drawer</span></span>
+          <span class="brand__sub">SEBS Square 2005 &middot; {{ drawSeconds }}-second live draw</span>
+        </span>
       </div>
-      <div class="stat">
-        <span class="stat__value rd-nums">{{ store.ticketsInPlay() }}</span>
-        <span class="stat__label">In the drum</span>
+
+      <div class="stats ms-auto" role="group" aria-label="Draw status">
+        <div class="stat">
+          <span class="stat__value rd-nums">{{ store.round() }}</span>
+          <span class="stat__label">Round</span>
+        </div>
+        <div class="stat">
+          <span class="stat__value rd-nums">{{ store.ticketsInPlay() }}</span>
+          <span class="stat__label">In the drum</span>
+        </div>
+        <div class="stat">
+          <span class="stat__value rd-nums">{{ store.winners().length }}</span>
+          <span class="stat__label">Drawn</span>
+        </div>
       </div>
-      <div class="stat">
-        <span class="stat__value rd-nums">{{ store.winners().length }}</span>
-        <span class="stat__label">Drawn</span>
+
+      <div class="d-flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="btn btn-sm rd-btn-ghost"
+          [class.active]="showSetup()"
+          (click)="showSetup.set(!showSetup())"
+          [disabled]="store.isDrawing()"
+        >
+          <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h10" />
+          </svg>
+          Entries
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-sm rd-btn-ghost"
+          [class.active]="stageMode()"
+          (click)="toggleStage()"
+          [title]="'Stage mode (S) - hide everything but the stage'"
+        >
+          <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="12" rx="2" />
+            <path d="M8 21h8" />
+          </svg>
+          Stage
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-sm rd-btn-ghost"
+          (click)="sound.toggleMute()"
+          [title]="sound.muted() ? 'Unmute (M)' : 'Mute (M)'"
+        >
+          <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M11 5 6.5 9H3v6h3.5L11 19z" />
+            @if (sound.muted()) {
+              <path d="m16 9.5 4 5m0-5-4 5" />
+            } @else {
+              <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" />
+            }
+          </svg>
+          <span class="visually-hidden">{{ sound.muted() ? 'Unmute' : 'Mute' }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-sm rd-btn-ghost"
+          (click)="toggleFullscreen()"
+          [title]="fullscreen() ? 'Exit full screen (F)' : 'Full screen (F)'"
+        >
+          <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            @if (fullscreen()) {
+              <path d="M9 4v5H4m11-5v5h5M9 20v-5H4m11 5v-5h5" />
+            } @else {
+              <path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5" />
+            }
+          </svg>
+          <span class="visually-hidden">Toggle full screen</span>
+        </button>
+
+        @if (auth.user(); as user) {
+          <span class="shell__user" title="Signed in">
+            <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.4" />
+              <path d="M4.8 20a7.2 7.2 0 0 1 14.4 0" />
+            </svg>
+            <span class="shell__user-name">{{ user.displayName }}</span>
+          </span>
+
+          <button
+            type="button"
+            class="btn btn-sm rd-btn-ghost"
+            (click)="signOut()"
+            [disabled]="store.isDrawing()"
+            [title]="'Sign out ' + user.displayName"
+          >
+            <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 17l5-5-5-5" />
+              <path d="M20 12H9" />
+              <path d="M12 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6" />
+            </svg>
+            <span class="visually-hidden">Sign out</span>
+          </button>
+        }
       </div>
     </div>
+  </header>
 
-    <div class="d-flex flex-wrap gap-2">
-      <button
-        type="button"
-        class="btn btn-sm rd-btn-ghost"
-        [class.active]="showSetup()"
-        (click)="showSetup.set(!showSetup())"
-        [disabled]="store.isDrawing()"
-      >
-        <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 6h16M4 12h16M4 18h10" />
-        </svg>
-        Entries
-      </button>
-
-      <button
-        type="button"
-        class="btn btn-sm rd-btn-ghost"
-        [class.active]="stageMode()"
-        (click)="toggleStage()"
-        [title]="'Stage mode (S) - hide everything but the stage'"
-      >
-        <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="5" width="18" height="12" rx="2" />
-          <path d="M8 21h8" />
-        </svg>
-        Stage
-      </button>
-
-      <button
-        type="button"
-        class="btn btn-sm rd-btn-ghost"
-        (click)="sound.toggleMute()"
-        [title]="sound.muted() ? 'Unmute (M)' : 'Mute (M)'"
-      >
-        <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M11 5 6.5 9H3v6h3.5L11 19z" />
-          @if (sound.muted()) {
-            <path d="m16 9.5 4 5m0-5-4 5" />
-          } @else {
-            <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" />
-          }
-        </svg>
-        <span class="visually-hidden">{{ sound.muted() ? 'Unmute' : 'Mute' }}</span>
-      </button>
-
-      <button
-        type="button"
-        class="btn btn-sm rd-btn-ghost"
-        (click)="toggleFullscreen()"
-        [title]="fullscreen() ? 'Exit full screen (F)' : 'Full screen (F)'"
-      >
-        <svg class="shell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          @if (fullscreen()) {
-            <path d="M9 4v5H4m11-5v5h5M9 20v-5H4m11 5v-5h5" />
-          } @else {
-            <path d="M4 9V4h5m6 0h5v5m0 6v5h-5m-6 0H4v-5" />
-          }
-        </svg>
-        <span class="visually-hidden">Toggle full screen</span>
-      </button>
-    </div>
-  </div>
-</header>
-
-<main class="container-xxl pb-5">
-  @if (showSetup() && !stageMode()) {
-    <div class="mb-4 rd-animate-in">
-      <app-setup-panel (loaded)="showSetup.set(false)" />
-    </div>
-  }
-
-  <div class="row g-4">
-    <div class="col-12" [class.col-xl-8]="!stageMode()">
-      <app-draw-stage />
-    </div>
-
-    @if (!stageMode()) {
-      <div class="col-12 col-xl-4">
-        <app-winners-board />
+  <main class="container-xxl pb-5">
+    @if (showSetup() && !stageMode()) {
+      <div class="mb-4 rd-animate-in">
+        <app-setup-panel (loaded)="showSetup.set(false)" />
       </div>
     }
-  </div>
 
-  <footer class="shell__footer">
-    <p class="mb-0">
-      <kbd>Space</kbd> draw or continue
-      <span class="shell__sep">&middot;</span>
-      <kbd>Esc</kbd> cancel
-      <span class="shell__sep">&middot;</span>
-      <kbd>&larr;</kbd><kbd>&rarr;</kbd> prize level
-      <span class="shell__sep">&middot;</span>
-      <kbd>S</kbd> stage mode
-      <span class="shell__sep">&middot;</span>
-      <kbd>F</kbd> full screen
-      <span class="shell__sep">&middot;</span>
-      <kbd>M</kbd> sound
-    </p>
-    <p class="mb-0 shell__fineprint">
-      Winners are picked with the browser crypto random generator and leave the drum, so nobody can
-      win twice.
-    </p>
-  </footer>
-</main>
+    <div class="row g-4">
+      <div class="col-12" [class.col-xl-8]="!stageMode()">
+        <app-draw-stage />
+      </div>
+
+      @if (!stageMode()) {
+        <div class="col-12 col-xl-4">
+          <app-winners-board />
+        </div>
+      }
+    </div>
+
+    <footer class="shell__footer">
+      <p class="mb-0">
+        <kbd>Space</kbd> draw or continue
+        <span class="shell__sep">&middot;</span>
+        <kbd>Esc</kbd> cancel
+        <span class="shell__sep">&middot;</span>
+        <kbd>&larr;</kbd><kbd>&rarr;</kbd> prize level
+        <span class="shell__sep">&middot;</span>
+        <kbd>S</kbd> stage mode
+        <span class="shell__sep">&middot;</span>
+        <kbd>F</kbd> full screen
+        <span class="shell__sep">&middot;</span>
+        <kbd>M</kbd> sound
+      </p>
+      <p class="mb-0 shell__fineprint">
+        Winners are picked with the browser crypto random generator and leave the drum, so nobody can
+        win twice.
+      </p>
+    </footer>
+  </main>
+}
 
 <app-confirm-dialog />

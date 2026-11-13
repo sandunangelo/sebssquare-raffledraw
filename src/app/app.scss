@@ -101,6 +101,31 @@
 }
 
 // -----------------------------------------------------------------------------
+//  Signed-in user
+// -----------------------------------------------------------------------------
+// Sits in the toolbar beside the sign-out button and matches the height of the
+// small buttons around it, but is deliberately not one - there is nothing to
+// click, it only says who is driving the draw.
+.shell__user {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--rd-muted);
+  background: var(--rd-surface);
+  border: 1px solid var(--rd-line);
+  border-radius: var(--bs-border-radius);
+}
+
+.shell__user-name {
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// -----------------------------------------------------------------------------
 //  Layout
 // -----------------------------------------------------------------------------
 main {
