@@ -1,0 +1,45 @@
+name: Deploy to GitHub Pages
+
+# Publishes the committed build output (dist/minitools/browser) as the site root, so
+# https://sandunangelo.github.io/minitools/ serves dist/minitools/browser/index.html.
+# Rebuild with `npm run build` and commit dist/ before pushing to update the site.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/raffle-drawer/browser/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # GitHub Pages serves 404.html for unknown paths; reusing index.html lets the Angular
+      # router handle deep links (e.g. /minitools/financial) on refresh or direct visit.
+      - name: Add SPA fallback
+        run: cp dist/raffle-drawer/browser/index.html dist/raffle-drawer/browser/404.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/raffle-drawer/browser
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
