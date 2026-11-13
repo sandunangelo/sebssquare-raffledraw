@@ -1,0 +1,152 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+// -----------------------------------------------------------------------------
+//  Header
+// -----------------------------------------------------------------------------
+.shell__header {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background: rgba(7, 10, 20, 0.72);
+  border-bottom: 1px solid var(--rd-line);
+  backdrop-filter: blur(18px) saturate(150%);
+  transition: opacity 0.4s ease;
+
+  &--slim {
+    opacity: 0.55;
+
+    &:hover,
+    &:focus-within {
+      opacity: 1;
+    }
+  }
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand__mark {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  background-image: var(--rd-logo);
+  background-size: cover;
+  background-position: center;
+  border-radius: 0.85rem;
+  // The logo sits on its own black field, so a hairline keeps it from
+  // dissolving into the header.
+  border: 1px solid var(--rd-line);
+  box-shadow: 0 10px 26px -12px rgba(0, 0, 0, 0.9);
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.brand__name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.brand__sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rd-faint);
+}
+
+// -----------------------------------------------------------------------------
+//  Header stats
+// -----------------------------------------------------------------------------
+.stats {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 4.5rem;
+  padding: 0.35rem 0.7rem;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--rd-line);
+  border-radius: 0.85rem;
+}
+
+.stat__value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.stat__label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rd-faint);
+  white-space: nowrap;
+}
+
+// -----------------------------------------------------------------------------
+//  Layout
+// -----------------------------------------------------------------------------
+main {
+  padding-top: 1.75rem;
+}
+
+.shell__icon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.35rem;
+  vertical-align: -0.15em;
+}
+
+.btn .shell__icon:only-child {
+  margin-right: 0;
+}
+
+.shell__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--rd-faint);
+}
+
+.shell__sep {
+  margin: 0 0.4rem;
+  opacity: 0.5;
+}
+
+.shell__fineprint {
+  max-width: 34rem;
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+@media (max-width: 575.98px) {
+  .stats {
+    order: 3;
+    width: 100%;
+  }
+
+  .stat {
+    flex: 1;
+  }
+}

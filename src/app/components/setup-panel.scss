@@ -1,0 +1,238 @@
+:host {
+  display: block;
+}
+
+.panel__title {
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+.panel__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--rd-faint);
+  margin-bottom: 0.35rem;
+}
+
+.panel__help {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--rd-faint);
+}
+
+.panel__hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  opacity: 0.9;
+}
+
+.panel__notice {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--rd-green-bright);
+}
+
+.panel__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.panel__stat {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.74rem;
+  color: var(--rd-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--rd-line);
+  border-radius: 50rem;
+
+  strong {
+    color: #fff;
+    font-weight: 800;
+  }
+}
+
+.panel__stat--source {
+  border-color: rgba(82, 177, 73, 0.45);
+  background: rgba(82, 177, 73, 0.14);
+}
+
+.panel__alert-icon {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.1rem;
+}
+
+.alert-danger {
+  --bs-alert-bg: rgba(255, 77, 109, 0.12);
+  --bs-alert-border-color: rgba(255, 77, 109, 0.4);
+  --bs-alert-color: #ffd5dd;
+  backdrop-filter: blur(10px);
+}
+
+.panel__paste {
+  font-family: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.panel__details {
+  font-size: 0.82rem;
+  color: var(--rd-muted);
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--rd-muted);
+    list-style: none;
+
+    &::marker,
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &::before {
+      content: "+";
+      display: inline-block;
+      width: 1.1em;
+      font-weight: 800;
+      color: var(--rd-green);
+    }
+
+    &:hover {
+      color: #fff;
+    }
+  }
+}
+
+.panel__details[open] summary::before {
+  content: "\2212";
+}
+
+.panel__steps {
+  margin: 0.75rem 0 0.5rem;
+  padding-left: 1.25rem;
+  line-height: 1.75;
+
+  strong {
+    color: var(--rd-text);
+  }
+}
+
+code {
+  padding: 0.1em 0.35em;
+  font-size: 0.9em;
+  color: var(--rd-green-bright);
+  background: rgba(111, 200, 95, 0.1);
+  border-radius: 0.3rem;
+}
+
+// -----------------------------------------------------------------------------
+//  Entry roster
+// -----------------------------------------------------------------------------
+.roster__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.roster__count {
+  font-size: 0.74rem;
+  color: var(--rd-faint);
+}
+
+.roster__sep {
+  margin: 0 0.35rem;
+  opacity: 0.5;
+}
+
+.roster__list {
+  // Tall enough to show a handful at a glance, short enough to leave the
+  // panel usable; the rest scrolls.
+  max-height: 18rem;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--rd-line);
+  border-radius: var(--bs-border-radius-lg);
+}
+
+.roster__item {
+  display: grid;
+  grid-template-columns: 1.75rem 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.6rem;
+
+  + .roster__item {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+.roster__item--won {
+  opacity: 0.55;
+
+  .roster__name {
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 199, 18, 0.6);
+  }
+}
+
+.roster__num {
+  font-size: 0.68rem;
+  color: var(--rd-faint);
+  text-align: right;
+}
+
+.roster__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.roster__name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.roster__detail {
+  font-size: 0.72rem;
+  color: var(--rd-faint);
+  overflow-wrap: anywhere;
+}
+
+.roster__badge {
+  padding: 0.05rem 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--rd-gold);
+  background: rgba(255, 199, 18, 0.12);
+  border: 1px solid rgba(255, 199, 18, 0.35);
+  border-radius: 50rem;
+}
+
+// Pre-flight warning: more prize slots on offer than people to win them.
+.panel__warn {
+  padding: 0.6rem 0.8rem;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #ffe9b0;
+  background: rgba(255, 199, 18, 0.1);
+  border: 1px solid rgba(255, 199, 18, 0.35);
+  border-radius: var(--bs-border-radius-lg);
+}

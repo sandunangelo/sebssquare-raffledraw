@@ -1,0 +1,692 @@
+:host {
+  display: block;
+}
+
+// -----------------------------------------------------------------------------
+//  Stage frame
+// -----------------------------------------------------------------------------
+.stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(26rem, 56vh, 40rem);
+  padding: 3.25rem clamp(1rem, 4vw, 3rem);
+  overflow: hidden;
+  background: var(--rd-surface);
+  border: 1px solid var(--rd-line);
+  border-radius: 1.75rem;
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: var(--rd-shadow-lg);
+  transition:
+    border-color 0.5s ease,
+    box-shadow 0.5s ease;
+
+  &[data-phase='drawing'] {
+    border-color: rgba(82, 177, 73, 0.4);
+    box-shadow:
+      var(--rd-shadow-lg),
+      inset 0 0 120px -40px rgba(82, 177, 73, 0.85);
+  }
+
+  &[data-phase='reveal'] {
+    border-color: rgba(255, 199, 18, 0.45);
+    box-shadow:
+      var(--rd-shadow-lg),
+      inset 0 0 140px -40px rgba(255, 199, 18, 0.6);
+  }
+}
+
+.stage__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+// Gentle tremor through the closing seconds.
+.stage[data-phase='drawing'][data-intensity='5'] .stage__inner {
+  animation: rd-shake 0.36s ease-in-out infinite;
+}
+
+.stage__sweep {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 26%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.07), transparent);
+  animation: rd-sweep 3.6s ease-in-out infinite;
+}
+
+// Theatre marquee bulbs along the top and bottom edges.
+.stage__bulbs {
+  position: absolute;
+  left: 1.75rem;
+  right: 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+
+  &--top {
+    top: 0.9rem;
+  }
+
+  &--bottom {
+    bottom: 0.9rem;
+  }
+
+  i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    color: var(--rd-gold);
+    background: currentcolor;
+    opacity: 0.22;
+    animation: rd-bulb 1.7s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 90ms);
+  }
+}
+
+.stage[data-phase='idle'] .stage__bulbs i {
+  animation-duration: 3.6s;
+}
+
+.stage[data-phase='drawing'][data-intensity='4'] .stage__bulbs i {
+  animation-duration: 0.95s;
+}
+
+.stage[data-phase='drawing'][data-intensity='5'] .stage__bulbs i {
+  animation-duration: 0.55s;
+  color: var(--rd-green-bright);
+}
+
+.stage[data-phase='reveal'] .stage__bulbs i {
+  animation-duration: 0.7s;
+  opacity: 1;
+}
+
+.stage__progress {
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.stage__progress-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  background: var(--rd-grad-green);
+  box-shadow: 0 0 18px rgba(255, 199, 18, 0.9);
+  animation: rd-fill-bar var(--rd-draw-ms) linear forwards;
+}
+
+.stage__abort {
+  position: absolute;
+  top: 1.7rem;
+  right: 1.4rem;
+  z-index: 3;
+}
+
+// -----------------------------------------------------------------------------
+//  Idle: the trigger
+// -----------------------------------------------------------------------------
+.ready,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: 34rem;
+  text-align: center;
+}
+
+.ready__round {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--rd-muted);
+}
+
+.trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(11rem, 29vw, 15rem);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  animation: rd-breathe 3.4s ease-in-out infinite;
+}
+
+.trigger__face {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  color: #07120a;
+  background:
+    radial-gradient(130% 120% at 30% 18%, rgba(255, 255, 255, 0.35), transparent 55%),
+    var(--rd-grad-green);
+  box-shadow:
+    inset 0 2px 1px rgba(255, 255, 255, 0.45),
+    inset 0 -16px 30px rgba(0, 0, 0, 0.35),
+    0 18px 44px -12px rgba(82, 177, 73, 0.9),
+    0 0 90px -14px rgba(255, 199, 18, 0.8);
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.2s ease;
+}
+
+.trigger:hover .trigger__face {
+  transform: scale(1.05);
+  filter: brightness(1.12);
+}
+
+.trigger:active .trigger__face {
+  transform: scale(0.96);
+  filter: brightness(0.95);
+}
+
+// The logo sits on its own black field, so it reads as a crisp chip on the
+// green face rather than something pasted on. Sized against the button so it
+// scales with the clamp on .trigger.
+.trigger__logo {
+  display: block;
+  width: 34%;
+  aspect-ratio: 1;
+  background-image: var(--rd-logo);
+  background-size: cover;
+  background-position: center;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 8px 20px -8px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.trigger__word {
+  font-size: clamp(1.45rem, 4vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.trigger__pulse {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(255, 199, 18, 0.55);
+  border-radius: 50%;
+  animation: rd-pulse-ring 2.7s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+
+  &:nth-of-type(2) {
+    animation-delay: 0.9s;
+  }
+
+  &:nth-of-type(3) {
+    animation-delay: 1.8s;
+  }
+}
+
+.ready__hint {
+  margin: 0;
+  color: var(--rd-muted);
+  font-size: 0.95rem;
+}
+
+.ready__pool {
+  margin: 0;
+  color: var(--rd-faint);
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+}
+
+.ready__pool-sub {
+  opacity: 0.75;
+}
+
+// -----------------------------------------------------------------------------
+//  Idle: empty / finished states
+// -----------------------------------------------------------------------------
+.empty__icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  color: var(--rd-faint);
+}
+
+.empty__icon--done {
+  color: var(--rd-green-bright);
+}
+
+.empty__title {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+}
+
+.empty__text {
+  margin: 0;
+  color: var(--rd-muted);
+}
+
+// -----------------------------------------------------------------------------
+//  Drawing: reel + labels
+// -----------------------------------------------------------------------------
+.drawing__label {
+  margin: 0 0 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--rd-green-bright);
+}
+
+.drawing__dots {
+  display: inline-block;
+  width: 1.2em;
+  overflow: hidden;
+  vertical-align: bottom;
+  animation: rd-ellipsis 1.5s steps(4, end) infinite;
+}
+
+.drawing__caption {
+  margin: 0.5rem 0 0;
+  color: var(--rd-faint);
+  font-size: 0.9rem;
+}
+
+.reel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(4.5rem, 11vw, 7rem);
+
+  @media (min-width: 992px) {
+    justify-content: flex-start;
+  }
+}
+
+.reel__name {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(1.8rem, 5.6vw, 4rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 0 34px rgba(82, 177, 73, 0.55);
+  // Shorter than the fastest reel tick, so names smear together at full speed
+  // and sharpen as the draw decelerates.
+  animation: rd-reel-in 0.14s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stage[data-intensity='5'] .reel__name {
+  color: var(--rd-gold);
+  text-shadow: 0 0 44px rgba(255, 199, 18, 0.7);
+}
+
+// Scrolling roll-call of the entries still in the drum.
+.ticker {
+  position: absolute;
+  inset: auto 0 2.6rem;
+  overflow: hidden;
+  opacity: 0.2;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.ticker__track {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+  animation: rd-marquee 42s linear infinite;
+}
+
+.ticker__item {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+// -----------------------------------------------------------------------------
+//  Reveal
+// -----------------------------------------------------------------------------
+.winner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+  width: 100%;
+}
+
+.winner__rays {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: 0;
+  width: min(140%, 60rem);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 199, 18, 0.17) 0deg 7deg,
+    transparent 7deg 22deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 70%);
+  mask-image: radial-gradient(circle, #000 18%, transparent 70%);
+  animation: rd-spin 26s linear infinite;
+}
+
+.winner__shock {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  z-index: 1;
+  width: min(80%, 26rem);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+  border: 6px solid rgba(255, 199, 18, 0.6);
+  border-radius: 50%;
+  animation: rd-shockwave 1.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.winner__card {
+  position: relative;
+  z-index: 2;
+  padding: clamp(1.4rem, 3.6vw, 2.5rem) clamp(1.5rem, 5vw, 3.5rem);
+  text-align: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 199, 18, 0.45);
+  border-radius: 1.75rem;
+  backdrop-filter: blur(18px);
+  box-shadow:
+    var(--rd-glow-gold),
+    var(--rd-shadow-lg);
+  animation: rd-reveal-pop 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.winner__name {
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(2rem, 6.6vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+
+.winner__detail {
+  margin: 0.6rem 0 0;
+  font-size: clamp(0.95rem, 2vw, 1.25rem);
+  font-weight: 600;
+  color: var(--rd-text);
+  opacity: 0.85;
+}
+
+.winner__meta {
+  margin: 0.9rem 0 0;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--rd-faint);
+}
+
+.winner__actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  animation: rd-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.65s both;
+}
+
+// -----------------------------------------------------------------------------
+//  Prize levels
+// -----------------------------------------------------------------------------
+.ready app-prize-selector {
+  margin-bottom: 0.35rem;
+}
+
+.ready__sep {
+  margin: 0 0.3rem;
+  opacity: 0.5;
+}
+
+.empty__icon--trophy {
+  color: var(--rd-gold);
+}
+
+.drawing__prize {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0 0 0.65rem;
+}
+
+.drawing__prize-label {
+  font-size: clamp(1rem, 2.4vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--rd-gold);
+  text-shadow: 0 0 26px rgba(255, 199, 18, 0.45);
+}
+
+.drawing__prize-detail {
+  font-size: 0.8rem;
+  color: var(--rd-muted);
+}
+
+.winner__prize {
+  display: inline-block;
+  margin: 0 0 0.75rem;
+  padding: 0.3rem 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #141001;
+  background: var(--rd-grad-gold);
+  border-radius: 50rem;
+  box-shadow: 0 10px 30px -12px rgba(255, 199, 18, 0.95);
+}
+
+.winner__prize-detail {
+  margin: -0.35rem 0 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--rd-muted);
+}
+
+// Seat number within a multi-slot level ("3 of 10").
+.winner__seat {
+  display: inline-block;
+  margin-left: 0.45rem;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.76em;
+  color: #141001;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 50rem;
+}
+
+.drawing__prize-seat {
+  margin-left: 0.4rem;
+  font-size: 0.72em;
+  font-weight: 700;
+  color: var(--rd-muted);
+}
+
+// -----------------------------------------------------------------------------
+//  Results screen (the night is over)
+// -----------------------------------------------------------------------------
+.results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 44rem;
+  text-align: center;
+}
+
+.results__trophy {
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--rd-gold);
+  filter: drop-shadow(0 0 22px rgba(255, 199, 18, 0.6));
+}
+
+.results__title {
+  margin: 0;
+  font-size: clamp(1.9rem, 5vw, 3rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.results__sub {
+  margin: 0 0 0.4rem;
+  font-size: 0.88rem;
+  color: var(--rd-muted);
+}
+
+.results__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  max-height: min(42vh, 22rem);
+  margin: 0;
+  padding: 0.5rem;
+  list-style: none;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--rd-line);
+  border-radius: var(--bs-border-radius-lg);
+}
+
+.results__group {
+  padding: 0.5rem 0.7rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--rd-line);
+  border-radius: 0.8rem;
+}
+
+.results__group--grand {
+  border-color: rgba(255, 199, 18, 0.45);
+  background: rgba(255, 199, 18, 0.08);
+}
+
+.results__level {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rd-faint);
+}
+
+.results__group--grand .results__level {
+  color: var(--rd-gold);
+}
+
+.results__count {
+  padding: 0 0.35rem;
+  font-size: 0.9em;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50rem;
+}
+
+.results__names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.results__name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.results__who {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.results__detail {
+  font-size: 0.72rem;
+  color: var(--rd-faint);
+}
+
+// The drum is about to run out before the slots do.
+.ready__short {
+  max-width: 30rem;
+  margin: 0;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: #ffe9b0;
+  background: rgba(255, 199, 18, 0.1);
+  border: 1px solid rgba(255, 199, 18, 0.35);
+  border-radius: 0.7rem;
+}
+
+.results__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.results__resume {
+  max-width: 32rem;
+  margin: 0;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #d9f5d0;
+  background: rgba(82, 177, 73, 0.14);
+  border: 1px solid rgba(82, 177, 73, 0.45);
+  border-radius: 0.7rem;
+}
+
+.results__watch {
+  max-width: 32rem;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--rd-faint);
+}
+
+.results__watch-at {
+  display: block;
+  opacity: 0.8;
+}

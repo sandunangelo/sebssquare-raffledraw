@@ -1,0 +1,244 @@
+<div class="card">
+  <div class="card-body d-flex flex-column gap-3">
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-2">
+      <div>
+        <p class="rd-eyebrow mb-1">Entry list</p>
+        <h2 class="panel__title mb-0">Load the candidates</h2>
+      </div>
+
+      @if (store.hasCandidates()) {
+        <div class="panel__stats rd-nums">
+          <span class="panel__stat">
+            <strong>{{ store.ticketCount() }}</strong>
+            {{ store.ticketCount() === 1 ? 'entry' : 'entries' }}
+          </span>
+          @if (store.peopleCount() !== store.ticketCount()) {
+            <span class="panel__stat"><strong>{{ store.peopleCount() }}</strong> people</span>
+          }
+          @if (store.sourceLabel() !== '') {
+            <span class="panel__stat panel__stat--source">{{ store.sourceLabel() }}</span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- ----------------------------------------------------- sheet URL ---- -->
+    <div>
+      <label class="form-label panel__label" for="sheetUrl">Public Google Sheet URL</label>
+      <div class="input-group">
+        <input
+          id="sheetUrl"
+          type="url"
+          class="form-control"
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="https://docs.google.com/spreadsheets/d/..."
+          [value]="url()"
+          (input)="onUrlInput($event)"
+          (keydown.enter)="loadFromSheet()"
+          [disabled]="loading()"
+        />
+        <button
+          type="button"
+          class="btn btn-primary px-3"
+          (click)="loadFromSheet()"
+          [disabled]="loading() || url().trim() === ''"
+        >
+          @if (loading()) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            Loading
+          } @else {
+            Load entries
+          }
+        </button>
+      </div>
+      <p class="panel__help mb-0">
+        Read straight from the browser, no backend. The sheet must be shared as
+        <em>Anyone with the link</em> or published to the web.
+      </p>
+    </div>
+
+    <!-- ------------------------------------------------ column mapping ---- -->
+    @if (store.table(); as table) {
+      <div class="row g-2">
+        <div class="col-12 col-sm-4">
+          <label class="form-label panel__label" for="firstNameCol">First name column</label>
+          <!-- selected per option, not value on the select: the select's own
+               bindings run before the @for has created any options. -->
+          <select
+            id="firstNameCol"
+            class="form-select"
+            (change)="onColumnChange('firstName', $event)"
+            [disabled]="store.winners().length > 0"
+          >
+            @for (column of table.columns; track $index) {
+              <option [value]="$index" [selected]="$index === columns().firstName">{{ column }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-12 col-sm-4">
+          <label class="form-label panel__label" for="lastNameCol">Last name column</label>
+          <select
+            id="lastNameCol"
+            class="form-select"
+            (change)="onColumnChange('lastName', $event)"
+            [disabled]="store.winners().length > 0"
+          >
+            <option [value]="-1" [selected]="columns().lastName === -1">None</option>
+            @for (column of table.columns; track $index) {
+              <option [value]="$index" [selected]="$index === columns().lastName">{{ column }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-12 col-sm-4">
+          <label class="form-label panel__label" for="detailCol">Detail column</label>
+          <select
+            id="detailCol"
+            class="form-select"
+            (change)="onColumnChange('detail', $event)"
+            [disabled]="store.winners().length > 0"
+          >
+            <option [value]="-1" [selected]="columns().detail === -1">None</option>
+            @for (column of table.columns; track $index) {
+              <option [value]="$index" [selected]="$index === columns().detail">{{ column }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-12">
+          <p class="panel__help mb-0">
+            @if (store.winners().length > 0) {
+              Columns are locked while a round is in progress. Reset the rounds to change them.
+            } @else {
+              First and last name are joined for the stage, and every name is re-cased so
+              <code>angelo</code> reads <code>Angelo</code> however it was typed.
+            }
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- ----------------------------------------------------- messages ---- -->
+    @if (problem(); as issue) {
+      <div class="alert alert-danger d-flex gap-3 mb-0" role="alert">
+        <svg class="panel__alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v4.5M12 16h.01" />
+        </svg>
+        <span>
+          <strong class="d-block">{{ issue.message }}</strong>
+          @if (issue.hint !== '') {
+            <span class="panel__hint">{{ issue.hint }}</span>
+          }
+        </span>
+      </div>
+    } @else if (notice() !== '') {
+      <p class="panel__notice mb-0" role="status">{{ notice() }}</p>
+    }
+
+    <!-- ------------------------------------------------- entry roster ---- -->
+    @if (store.shortOfEntrants()) {
+      <p class="panel__warn mb-0">
+        {{ store.peopleCount() }} {{ store.peopleCount() === 1 ? 'entrant' : 'entrants' }} for
+        {{ store.prizeSlotsTotal() }} prize slots &mdash; the drum runs dry after
+        {{ store.peopleCount() }} {{ store.peopleCount() === 1 ? 'round' : 'rounds' }}. Add more
+        entries, or lower the slot counts in the environment file.
+      </p>
+    }
+
+    @if (store.hasCandidates()) {
+      <div class="roster">
+        <div class="roster__head">
+          <span class="rd-eyebrow">Who is in the draw</span>
+          <span class="roster__count rd-nums">
+            {{ store.ticketsInPlay() }} in the drum
+            @if (store.winners().length > 0) {
+              <span class="roster__sep">&middot;</span>{{ store.winners().length }} drawn
+            }
+          </span>
+        </div>
+
+        <ol class="roster__list rd-scroll">
+          @for (entry of store.entryList(); track entry.candidate.id) {
+            <li class="roster__item" [class.roster__item--won]="entry.wonLabel !== null">
+              <span class="roster__num rd-nums">{{ $index + 1 }}</span>
+              <span class="roster__who">
+                <span class="roster__name">{{ entry.candidate.name }}</span>
+                @if (entry.candidate.detail !== '') {
+                  <span class="roster__detail">{{ entry.candidate.detail }}</span>
+                }
+              </span>
+              @if (entry.wonLabel; as label) {
+                <span class="roster__badge">{{ label }}</span>
+              }
+            </li>
+          }
+        </ol>
+      </div>
+    }
+
+    <!-- ----------------------------------------------------- fallbacks ---- -->
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-sm rd-btn-ghost" (click)="loadDemo()">
+        Use demo roster
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm rd-btn-ghost"
+        [class.active]="pasteOpen()"
+        (click)="pasteOpen.set(!pasteOpen())"
+      >
+        Paste names instead
+      </button>
+      @if (store.hasCandidates()) {
+        <button type="button" class="btn btn-sm rd-btn-ghost ms-auto" (click)="clear()">
+          Clear entries
+        </button>
+      }
+    </div>
+
+    @if (pasteOpen()) {
+      <div class="rd-animate-in">
+        <label class="form-label panel__label" for="pasteBox">
+          One entry per line &mdash; <code>Name, Detail</code>
+        </label>
+        <textarea
+          id="pasteBox"
+          class="form-control panel__paste"
+          rows="5"
+          spellcheck="false"
+          placeholder="Amara Okafor, Engineering&#10;Dilini Perera, Finance"
+          [value]="pasteText()"
+          (input)="onPasteInput($event)"
+        ></textarea>
+        <button type="button" class="btn btn-sm btn-primary mt-2" (click)="applyPastedList()">
+          Use this list
+        </button>
+      </div>
+    }
+
+    <details class="panel__details">
+      <summary>How to share the sheet so the browser can read it</summary>
+      <ol class="panel__steps">
+        <li>Open the sheet and press <strong>Share</strong>.</li>
+        <li>
+          Under <strong>General access</strong> choose <strong>Anyone with the link</strong>, role
+          <strong>Viewer</strong>.
+        </li>
+        <li>Copy that link and paste it above.</li>
+        <li>
+          If your organisation blocks link sharing, use
+          <strong>File &rsaquo; Share &rsaquo; Publish to web</strong>, pick
+          <strong>Comma-separated values (.csv)</strong>, and paste the published link instead.
+        </li>
+      </ol>
+      <p class="panel__help mb-0">
+        The first row may be a header. Put the entrant names in one column and any detail you want
+        shown under the name &mdash; department, team or ticket number &mdash; in another. A person
+        listed twice gets two chances to win but can still only win once.
+      </p>
+    </details>
+  </div>
+</div>

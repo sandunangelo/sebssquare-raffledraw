@@ -1,0 +1,302 @@
+<section class="stage" [attr.data-phase]="store.phase()" [attr.data-intensity]="store.stage().intensity">
+  <div class="stage__bulbs stage__bulbs--top" aria-hidden="true">
+    @for (bulb of bulbs; track bulb) {
+      <i [style.--i]="bulb"></i>
+    }
+  </div>
+
+  @if (store.isDrawing()) {
+    <span class="stage__sweep" aria-hidden="true"></span>
+  }
+
+  <div class="stage__inner">
+    @switch (store.phase()) {
+      <!-- ------------------------------------------------------- idle ---- -->
+      @case ('idle') {
+        @if (!store.hasCandidates()) {
+          <div class="empty rd-animate-in">
+            <svg class="empty__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+              <rect x="3" y="7" width="18" height="12" rx="2.5" />
+              <path d="M3 11h18M12 7v12" stroke-dasharray="2.5 2.5" />
+            </svg>
+            <h2 class="empty__title">No entries loaded yet</h2>
+            <p class="empty__text">
+              Load the candidate list from the Google Sheet above, then the stage is yours.
+            </p>
+          </div>
+        } @else if (store.drawComplete()) {
+          <!-- The night is over. Results, not a reset button: offering to wipe
+               the board here is the last thing anyone needs on a projector. -->
+          <div class="results rd-animate-in">
+            <svg class="results__trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M8 4h8v5a4 4 0 0 1-8 0z" />
+              <path d="M16 5h2.5a1.5 1.5 0 0 1 0 5H16M8 5H5.5a1.5 1.5 0 0 0 0 5H8" />
+              <path d="M12 13v4m-3 3h6" />
+            </svg>
+
+            <p class="rd-eyebrow mb-1">That is the draw</p>
+            <h2 class="results__title rd-gold-text">
+              {{ store.winners().length }}
+              {{ store.winners().length === 1 ? 'winner' : 'winners' }}
+            </h2>
+
+            <p class="results__sub">
+              @if (store.allPrizesAwarded()) {
+                Every prize has been awarded.
+              } @else {
+                The drum is empty &mdash; {{ store.slotsRemaining() }}
+                {{ store.slotsRemaining() === 1 ? 'prize slot was' : 'prize slots were' }} left
+                undrawn. Add more entrants to the sheet, or lower the slot counts.
+              }
+            </p>
+
+            <ol class="results__list rd-scroll">
+              @for (group of resultGroups(); track group.id) {
+                <li class="results__group" [class.results__group--grand]="group.grand">
+                  <p class="results__level">
+                    {{ group.label }}
+                    @if (group.winners.length > 1) {
+                      <span class="results__count rd-nums">{{ group.winners.length }}</span>
+                    }
+                  </p>
+                  <ul class="results__names">
+                    @for (winner of group.winners; track winner.round) {
+                      <li class="results__name">
+                        <span class="results__who">{{ winner.candidate.name }}</span>
+                        @if (winner.candidate.detail !== '') {
+                          <span class="results__detail">{{ winner.candidate.detail }}</span>
+                        }
+                      </li>
+                    }
+                  </ul>
+                </li>
+              }
+            </ol>
+
+            @if (store.canResume()) {
+              <p class="results__resume rd-nums">
+                {{ store.peopleInPlay() }} new
+                {{ store.peopleInPlay() === 1 ? 'entrant has' : 'entrants have' }} joined the sheet
+                &mdash; {{ store.slotsRemaining() }}
+                {{ store.slotsRemaining() === 1 ? 'slot is' : 'slots are' }} still open.
+              </p>
+            }
+
+            <div class="results__actions">
+              @if (store.canResume()) {
+                <button type="button" class="btn btn-primary px-4" (click)="store.resume()">
+                  Resume the draw
+                </button>
+              }
+              <button type="button" class="btn rd-btn-ghost" (click)="exportCsv()">
+                Download the winners
+              </button>
+              @if (refresh.active()) {
+                <button
+                  type="button"
+                  class="btn rd-btn-ghost"
+                  [disabled]="refresh.checking()"
+                  (click)="refresh.check()"
+                >
+                  @if (refresh.checking()) {
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    Checking
+                  } @else {
+                    Check the sheet now
+                  }
+                </button>
+              }
+            </div>
+
+            @if (refresh.active()) {
+              <p class="results__watch">
+                Watching the sheet &mdash; it is re-read every
+                {{ refreshSeconds }} seconds, so new entrants turn up on their own.
+                @if (refresh.lastCheckedAt(); as at) {
+                  <span class="results__watch-at rd-nums">
+                    Last checked {{ at | date: 'HH:mm:ss' }}.
+                  </span>
+                }
+              </p>
+            }
+          </div>
+        } @else {
+          <div class="ready rd-animate-in">
+            <app-prize-selector />
+
+            <p class="ready__round rd-eyebrow">
+              Round {{ store.round() }}
+              @if (store.selectedPrize(); as prize) {
+                <span class="ready__sep">&middot;</span> drawing for {{ prize.label }}
+              }
+            </p>
+
+            <button
+              type="button"
+              class="trigger"
+              (click)="store.draw()"
+              [attr.aria-label]="drawLabel()"
+            >
+              <span class="trigger__pulse" aria-hidden="true"></span>
+              <span class="trigger__pulse" aria-hidden="true"></span>
+              <span class="trigger__pulse" aria-hidden="true"></span>
+              <span class="trigger__face">
+                <span class="trigger__logo" aria-hidden="true"></span>
+                <span class="trigger__word">Draw</span>
+              </span>
+            </button>
+
+            <p class="ready__hint">
+              Hit the button or press <kbd>Space</kbd> to start the {{ drawSeconds }}-second draw
+            </p>
+            @if (store.peopleShortfall() > 0) {
+              <p class="ready__short rd-nums">
+                Only {{ store.peopleInPlay() }}
+                {{ store.peopleInPlay() === 1 ? 'entrant' : 'entrants' }} left for
+                {{ store.slotsRemaining() }} remaining
+                {{ store.slotsRemaining() === 1 ? 'slot' : 'slots' }} &mdash; the draw will end
+                {{ store.peopleShortfall() }}
+                {{ store.peopleShortfall() === 1 ? 'slot' : 'slots' }} short.
+              </p>
+            }
+
+            <p class="ready__pool rd-nums">
+              {{ store.ticketsInPlay() }} {{ store.ticketsInPlay() === 1 ? 'entry' : 'entries' }} in the drum
+              @if (store.peopleInPlay() !== store.ticketsInPlay()) {
+                <span class="ready__pool-sub">({{ store.peopleInPlay() }} people)</span>
+              }
+            </p>
+          </div>
+        }
+      }
+
+      <!-- ---------------------------------------------------- drawing ---- -->
+      @case ('drawing') {
+        <div class="row align-items-center g-4 g-xl-5 w-100">
+          <div class="col-12 col-lg-4 order-lg-2">
+            <app-countdown-ring
+              [seconds]="store.secondsLeft()"
+              [running]="true"
+              [intensity]="store.stage().intensity"
+            />
+          </div>
+
+          <div class="col-12 col-lg-8 order-lg-1 text-center text-lg-start">
+            @if (store.selectedPrize(); as prize) {
+              <p class="drawing__prize">
+                <span class="drawing__prize-label">
+                  {{ prize.label }}
+                  @if (prize.slots > 1) {
+                    <span class="drawing__prize-seat rd-nums">
+                      {{ (store.selectedStatus()?.awarded ?? 0) + 1 }} of {{ prize.slots }}
+                    </span>
+                  }
+                </span>
+                @if (prize.detail !== '') {
+                  <span class="drawing__prize-detail">{{ prize.detail }}</span>
+                }
+              </p>
+            }
+
+            <p class="drawing__label">
+              {{ store.stage().label }}<span class="drawing__dots" aria-hidden="true">...</span>
+            </p>
+
+            <div class="reel">
+              @for (frame of reelFrames(); track frame.key) {
+                <span class="reel__name">{{ frame.name }}</span>
+              }
+            </div>
+
+            <p class="drawing__caption">{{ store.stage().caption }}</p>
+          </div>
+        </div>
+
+        <div class="stage__progress" aria-hidden="true">
+          <span class="stage__progress-fill rd-keep-motion"></span>
+        </div>
+
+        <button type="button" class="btn btn-sm rd-btn-ghost stage__abort" (click)="store.abortDraw()">
+          Cancel <kbd>Esc</kbd>
+        </button>
+      }
+
+      <!-- ----------------------------------------------------- reveal ---- -->
+      @case ('reveal') {
+        @if (store.lastWinner(); as winner) {
+          <div class="winner">
+            <span class="winner__rays" aria-hidden="true"></span>
+            <span class="winner__shock" aria-hidden="true"></span>
+
+            <div class="winner__card">
+              @if (winner.prize; as prize) {
+                <p class="winner__prize">
+                  {{ prize.label }}
+                  @if (prize.slots > 1) {
+                    <span class="winner__seat rd-nums">{{ prize.seat }} of {{ prize.slots }}</span>
+                  }
+                </p>
+                @if (prize.detail !== '') {
+                  <p class="winner__prize-detail">{{ prize.detail }}</p>
+                }
+              } @else {
+                <p class="rd-eyebrow mb-2">Round {{ winner.round }} winner</p>
+              }
+
+              <h2 class="winner__name rd-gold-text" aria-live="assertive">{{ winner.candidate.name }}</h2>
+              @if (winner.candidate.detail !== '') {
+                <p class="winner__detail">{{ winner.candidate.detail }}</p>
+              }
+              <p class="winner__meta rd-nums">
+                Round {{ winner.round }}
+                &middot; drawn at {{ winner.drawnAt | date: 'HH:mm:ss' }}
+                &middot; {{ store.ticketsInPlay() }} still in the drum
+              </p>
+            </div>
+
+            <div class="winner__actions">
+              @if (store.canDrawNext()) {
+                <button type="button" class="btn btn-primary btn-lg px-4" (click)="store.acknowledge()">
+                  @if (store.selectedPrize(); as next) {
+                    Next: {{ next.label }}
+                  } @else {
+                    Next draw
+                  }
+                  <kbd class="ms-2">Space</kbd>
+                </button>
+              } @else {
+                <button type="button" class="btn btn-primary btn-lg px-4" (click)="store.acknowledge()">
+                  Finish
+                </button>
+              }
+              <button type="button" class="btn rd-btn-ghost" (click)="store.undoLastWinner()">
+                Not present &mdash; redraw
+              </button>
+            </div>
+          </div>
+        }
+      }
+    }
+  </div>
+
+  <div class="stage__bulbs stage__bulbs--bottom" aria-hidden="true">
+    @for (bulb of bulbs; track bulb) {
+      <i [style.--i]="bulb"></i>
+    }
+  </div>
+
+  @if (store.isDrawing()) {
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker__track">
+        @for (name of store.tickerNames(); track $index) {
+          <span class="ticker__item">{{ name }}</span>
+        }
+        @for (name of store.tickerNames(); track $index) {
+          <span class="ticker__item">{{ name }}</span>
+        }
+      </div>
+    </div>
+  }
+</section>
+
+<app-confetti-canvas />
