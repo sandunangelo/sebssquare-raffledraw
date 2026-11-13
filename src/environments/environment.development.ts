@@ -31,7 +31,7 @@ export const environment = {
   candidatesTab: 'Candidates',
 
   /** Seconds the draw runs for. The UI timeline follows this value. */
-  drawDurationSeconds: 10,
+  drawDurationSeconds: 20,
 
   /**
    * Prize levels. Array order is BOTH the on-screen tile order and the order
