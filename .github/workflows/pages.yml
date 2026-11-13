@@ -1,7 +1,7 @@
 name: Deploy to GitHub Pages
 
-# Publishes the committed build output (dist/minitools/browser) as the site root, so
-# https://sandunangelo.github.io/minitools/ serves dist/minitools/browser/index.html.
+# Publishes the committed build output (dist/raffle-drawer/browser) as the site root, so
+# https://sandunangelo.github.io/sebssquare-raffledraw/ serves dist/raffle-drawer/browser/index.html.
 # Rebuild with `npm run build` and commit dist/ before pushing to update the site.
 
 on:
@@ -27,19 +27,33 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      SITE_DIR: dist/raffle-drawer/browser
     steps:
       - uses: actions/checkout@v4
 
-      # GitHub Pages serves 404.html for unknown paths; reusing index.html lets the Angular
-      # router handle deep links (e.g. /minitools/financial) on refresh or direct visit.
-      - name: Add SPA fallback
-        run: cp dist/raffle-drawer/browser/index.html dist/raffle-drawer/browser/404.html
+      - id: pages
+        uses: actions/configure-pages@v5
 
-      - uses: actions/configure-pages@v5
+      # The build emits <base href="/">, which on a project site makes the browser request
+      # /main-*.js from the domain root (404, blank page). Point it at the Pages base path
+      # instead (e.g. /sebssquare-raffledraw/, or / under a custom domain).
+      - name: Set base href
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          sed -i "s|<base href=\"/\">|<base href=\"${BASE_PATH}/\">|" "$SITE_DIR/index.html"
+          grep -q "<base href=\"${BASE_PATH}/\">" "$SITE_DIR/index.html" \
+            || { echo "::error::index.html has no <base href=\"${BASE_PATH}/\">"; exit 1; }
+
+      # GitHub Pages serves 404.html for unknown paths; reusing index.html means any
+      # unknown URL under the site still loads the app instead of GitHub's 404 page.
+      - name: Add SPA fallback
+        run: cp "$SITE_DIR/index.html" "$SITE_DIR/404.html"
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/raffle-drawer/browser
+          path: ${{ env.SITE_DIR }}
 
       - id: deployment
         uses: actions/deploy-pages@v4
